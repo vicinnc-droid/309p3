@@ -9,8 +9,22 @@
 
 namespace fs = std::filesystem;
 
-bool Workspace::resolve(std::string_view /*user_path*/, fs::path* /*out*/,
+bool Workspace::resolve(std::string_view user_path, fs::path* out,
                         std::string* reason) const {
-    *reason = "Workspace::resolve not implemented yet";   // TODO
+
+    // Step 1: Reject an empty path
+    if (user_path.empty()) {
+        *reason = "empty path";
+        return false;
+    }
+
+    // Step 2: Reject paths containing a null character
+if (user_path.find('\0') != std::string_view::npos) {
+    *reason = "path contains null character";
+    return false;
+}
+
+// Temporary until we finish the remaining steps
+    *reason = "Workspace::resolve not fully implemented yet";
     return false;
 }
