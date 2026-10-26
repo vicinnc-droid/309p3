@@ -24,7 +24,35 @@ if (user_path.find('\0') != std::string_view::npos) {
     return false;
 }
 
-// Temporary until we finish the remaining steps
-    *reason = "Workspace::resolve not fully implemented yet";
+    // Step 3: Convert the string into a filesystem path
+fs::path p{std::string(user_path)};
+
+// Reject absolute or rooted paths
+if (p.is_absolute() || p.has_root_path()) {
+    *reason = "absolute paths are not allowed";
     return false;
+}
+
+// Step 4: Normalize the path
+fs::path n = p.lexically_normal();
+
+// Step 5: Reject paths that escape the workspace
+if (!n.empty() && *n.begin() == "..") {
+    *reason = "path escapes workspace";
+    return false;
+}
+
+
+// Step 6: Create the full path inside the workspace
+if (n == ".") {
+    *out = root();
+} else {
+    *out = root() / n;
+}
+
+// Path is valid
+return true;
+
+
+
 }
