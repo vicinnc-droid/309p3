@@ -34,6 +34,31 @@ bool ToolRegistry::add(std::unique_ptr<Tool> tool) {
         return false;
     }
 
+    // Resize if adding a tool would exceed a 0.75 load factor
+if (count_ + 1 > buckets_.size() * 0.75) {
+
+    // Create a new table with twice as many buckets
+    std::vector<std::vector<std::unique_ptr<Tool>>> newBuckets(
+        buckets_.size() * 2
+    );
+
+    // Move existing tools into their new buckets
+    for (auto& bucket : buckets_) {
+        for (auto& existingTool : bucket) {
+
+            // Calculate the new bucket index
+            std::size_t newIndex =
+                hash(existingTool->name()) % newBuckets.size();
+
+            // Transfer ownership into the new bucket
+            newBuckets[newIndex].push_back(std::move(existingTool));
+        }
+    }
+
+    // Replace the old table with the new table
+    buckets_ = std::move(newBuckets);
+}
+
     // Find the bucket for this tool
     std::size_t index = hash(tool->name()) % buckets_.size();
 
@@ -65,8 +90,18 @@ std::size_t ToolRegistry::size() const noexcept {
     return count_;
 }
 
-void ToolRegistry::for_each(const std::function<void(const Tool&)>& /*fn*/) const {
-    // TODO
+void ToolRegistry::for_each(const std::function<void(const Tool&)>& fn) const {
+
+    // Go through every bucket
+    for (const auto& bucket : buckets_) {
+
+        // Go through every tool in that bucket
+        for (const auto& tool : bucket) {
+
+            // Call the function on this tool
+            fn(*tool);
+        }
+    }
 }
 
 std::size_t ToolRegistry::bucket_count() const noexcept {
