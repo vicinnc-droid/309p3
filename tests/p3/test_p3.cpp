@@ -248,4 +248,58 @@ TEST(ws_normalizes_paths) {
     CHECK(out == ws.root());
 }
 
+// Test that an empty path is rejected
+TEST(ws_rejects_empty_path) {
+    TempDir d;
+    Workspace ws(d.path());
+
+    fs::path out;
+    std::string reason;
+
+    CHECK(!ws.resolve("", &out, &reason));
+    CHECK(!reason.empty());
+}
+
+// Test that paths containing a null character are rejected
+TEST(ws_rejects_null_character) {
+    TempDir d;
+    Workspace ws(d.path());
+
+    fs::path out;
+    std::string reason;
+
+    std::string badPath = std::string("notes") + '\0' + "/todo.txt";
+
+    CHECK(!ws.resolve(badPath, &out, &reason));
+    CHECK(!reason.empty());
+}
+
+// Test that paths cannot escape the workspace
+TEST(ws_rejects_multiple_parent_paths) {
+    TempDir d;
+    Workspace ws(d.path());
+
+    fs::path out;
+    std::string reason;
+
+    CHECK(!ws.resolve("a/../../b", &out, &reason));
+    CHECK(!reason.empty());
+
+    CHECK(!ws.resolve("notes/../../ws/notes/todo.txt",
+                      &out, &reason));
+    CHECK(!reason.empty());
+}
+
+// Test valid filenames containing two periods
+TEST(ws_accepts_double_period_filename) {
+    TempDir d;
+    Workspace ws(d.path());
+
+    fs::path out;
+    std::string reason;
+
+    REQUIRE(ws.resolve("my..notes.txt", &out, &reason));
+    CHECK(out == ws.root() / "my..notes.txt");
+}
+
 int main(int argc, char** argv) { return mt::run_all(argc, argv); }
