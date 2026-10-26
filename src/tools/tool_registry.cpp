@@ -113,5 +113,18 @@ double ToolRegistry::load_factor() const noexcept {
 }
 
 std::size_t ToolRegistry::max_probe_length() const {
-    return 0;   // TODO
+
+    // Track the longest chain
+    std::size_t maxLength = 0;
+
+    // Check every bucket
+    for (const auto& bucket : buckets_) {
+
+        // Update maxLength if this bucket is larger
+        if (bucket.size() > maxLength) {
+            maxLength = bucket.size();
+        }
+    }
+
+    return maxLength;
 }
