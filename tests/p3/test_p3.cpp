@@ -302,4 +302,55 @@ TEST(ws_accepts_double_period_filename) {
     CHECK(out == ws.root() / "my..notes.txt");
 }
 
+// Test subtraction from left to right
+TEST(calc_left_to_right) {
+    double v = 0;
+    std::string err;
+
+    REQUIRE(eval("10 - 4 - 3", &v, &err));
+    CHECK(v == 3);
+
+    REQUIRE(eval("100 / 10 / 5", &v, &err));
+    CHECK(v == 2);
+}
+
+// Test calculations with parentheses
+TEST(calc_parentheses) {
+    double v = 0;
+    std::string err;
+
+    REQUIRE(eval("(2 + 3) * 4", &v, &err));
+    CHECK(v == 20);
+
+    REQUIRE(eval("2 * (3 + 4) - 5", &v, &err));
+    CHECK(v == 9);
+}
+
+// Test negative numbers
+TEST(calc_negative_numbers) {
+    double v = 0;
+    std::string err;
+
+    REQUIRE(eval("-3 * -3", &v, &err));
+    CHECK(v == 9);
+}
+
+// Test decimal calculations
+TEST(calc_decimals) {
+    double v = 0;
+    std::string err;
+
+    REQUIRE(eval("7 / 2", &v, &err));
+    CHECK(v == 3.5);
+}
+
+// Test division by zero inside parentheses
+TEST(calc_parentheses_division_by_zero) {
+    double v = 0;
+    std::string err;
+
+    CHECK(!eval("1 / (2 - 2)", &v, &err));
+    CHECK(err == "division by zero");
+}
+
 int main(int argc, char** argv) { return mt::run_all(argc, argv); }
