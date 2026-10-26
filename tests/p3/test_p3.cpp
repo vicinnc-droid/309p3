@@ -208,7 +208,7 @@ TEST(reg_alternative_hash) {
     }
 
     // Print the comparison
-    std::printf("FNV-1a max chain: %zu\n", r.max_probe_cmake --build build -jlength());
+    std::printf("FNV-1a max chain: %zu\n", r.max_probe_length());
     std::printf("Weak hash max chain: %d\n", weakMax);
 
     CHECK(r.max_probe_length() <= 64);
@@ -225,6 +225,27 @@ TEST(ws_rejects_absolute_path) {
 
     CHECK(!ws.resolve("/etc/passwd", &out, &reason));
     CHECK(!reason.empty());
+}
+
+// Test that relative paths are normalized correctly
+TEST(ws_normalizes_paths) {
+    TempDir d;
+    Workspace ws(d.path());
+
+    fs::path out;
+    std::string reason;
+
+    // Remove the unnecessary current-directory component
+    REQUIRE(ws.resolve("./notes//todo.txt", &out, &reason));
+    CHECK(out == ws.root() / "notes" / "todo.txt");
+
+    // Resolve a parent-directory component
+    REQUIRE(ws.resolve("a/../b", &out, &reason));
+    CHECK(out == ws.root() / "b");
+
+    // A path that normalizes to "." should return the root
+    REQUIRE(ws.resolve("a/..", &out, &reason));
+    CHECK(out == ws.root());
 }
 
 int main(int argc, char** argv) { return mt::run_all(argc, argv); }
