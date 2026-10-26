@@ -104,4 +104,127 @@ TEST(calc_division_by_zero) {
 //   ws_<case>                     REQUIRED: every row of the table in spec §4.4
 //   calc_<case>                   left-to-right, parentheses, negatives
 
+// Test that a null tool cannot be added
+TEST(reg_null_rejected) {
+    ToolRegistry r;
+
+    CHECK(!r.add(nullptr));
+    CHECK(r.size() == 0);
+    CHECK(r.find("alpha") == nullptr);
+}
+
+// Test that for_each visits every tool exactly once
+TEST(reg_for_each_visits_each_once) {
+    ToolRegistry r;
+
+    REQUIRE(r.add(std::make_unique<NamedTool>("alpha")));
+    REQUIRE(r.add(std::make_unique<NamedTool>("beta")));
+    REQUIRE(r.add(std::make_unique<NamedTool>("gamma")));
+
+    int count = 0;
+
+    r.for_each([&](const Tool& tool) {
+        CHECK(r.find(tool.name()) != nullptr);
+        count++;
+    });
+
+    CHECK(count == 3);
+    CHECK(r.size() == 3);
+}
+
+// Test the registry with 10,000 tools
+TEST(reg_10000_tools) {
+    ToolRegistry r;
+
+    // Add the first tool and remember its address
+    auto first = std::make_unique<NamedTool>("tool_0");
+    Tool* original = first.get();
+
+    REQUIRE(r.add(std::move(first)));
+
+    // Add the remaining 9,999 tools
+    for (int i = 1; i < 10000; i++) {
+        std::string name = "tool_" + std::to_string(i);
+
+        REQUIRE(r.add(std::make_unique<NamedTool>(name)));
+
+        // Verify the load factor after every insertion
+        CHECK(r.load_factor() <= 1.0);
+    }
+
+    // Verify all tools can still be found
+    for (int i = 0; i < 10000; i++) {
+        std::string name = "tool_" + std::to_string(i);
+        CHECK(r.find(name) != nullptr);
+    }
+
+    // Verify the original pointer survived resizing
+    CHECK(r.find("tool_0") == original);
+
+    // Verify the number of tools
+    CHECK(r.size() == 10000);
+
+    // Verify collision handling
+    CHECK(r.max_probe_length() <= 64);
+
+    // Print measurements for the design log
+    std::printf("Bucket count: %zu\n", r.bucket_count());
+    std::printf("Load factor: %.4f\n", r.load_factor());
+    std::printf("Max probe length: %zu\n", r.max_probe_length());
+}
+
+// Compare FNV-1a with a weak hash function
+TEST(reg_alternative_hash) {
+    ToolRegistry r;
+
+    // Insert 10,000 tools
+    for (int i = 0; i < 10000; i++) {
+        std::string name = "tool_" + std::to_string(i);
+        REQUIRE(r.add(std::make_unique<NamedTool>(name)));
+    }
+
+    // Create buckets to simulate the weak hash
+    std::vector<int> weakBuckets(r.bucket_count(), 0);
+
+    for (int i = 0; i < 10000; i++) {
+        std::string name = "tool_" + std::to_string(i);
+
+        // Weak hash uses the first character and string length
+        std::size_t weakHash =
+            static_cast<unsigned char>(name[0]) + name.size();
+
+        std::size_t index = weakHash % weakBuckets.size();
+
+        weakBuckets[index]++;
+    }
+
+    // Find the longest chain produced by the weak hash
+    int weakMax = 0;
+
+    for (int count : weakBuckets) {
+        if (count > weakMax) {
+            weakMax = count;
+        }
+    }
+
+    // Print the comparison
+    std::printf("FNV-1a max chain: %zu\n", r.max_probe_cmake --build build -jlength());
+    std::printf("Weak hash max chain: %d\n", weakMax);
+
+    CHECK(r.max_probe_length() <= 64);
+    CHECK(weakMax > static_cast<int>(r.max_probe_length()));
+}
+
+// Test that absolute paths are rejected
+TEST(ws_rejects_absolute_path) {
+    TempDir d;
+    Workspace ws(d.path());
+
+    fs::path out;
+    std::string reason;
+
+    CHECK(!ws.resolve("/etc/passwd", &out, &reason));
+    CHECK(!reason.empty());
+}
+
 int main(int argc, char** argv) { return mt::run_all(argc, argv); }
