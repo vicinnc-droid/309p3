@@ -4,85 +4,100 @@
 // Every function below is a stub so the starter compiles. Replace each body.
 
 #include "tools/tool_registry.h"
+
 #include <cstdint>
 
 ToolRegistry::ToolRegistry() {
     buckets_.resize(16);
 }
-ToolRegistry::~ToolRegistry() = default;   // unique_ptrs in your buckets free the tools
-
+ToolRegistry::~ToolRegistry() = default;  
 std::size_t ToolRegistry::hash(std::string_view key) noexcept {
-    std::uint64_t h = 1469598103934665603ULL;
 
-    for (unsigned char c : key) {
-        h ^= c;
-        h *= 1099511628211ULL;
+    std::uint64_t weirdNum= 1469598103934665603ULL;
+
+    for (unsigned char unsignedc : key) {
+
+
+        weirdNum ^= unsignedc;
+        weirdNum *= 1099511628211ULL;
     }
 
-    return static_cast<std::size_t>(h);
+    return static_cast<std::size_t>(weirdNum);
 }
 
-bool ToolRegistry::add(std::unique_ptr<Tool> tool) {
+//vary is said tool
+bool ToolRegistry::add(std::unique_ptr<Tool> vary) {
 
-    // Reject a null tool
-    if (tool == nullptr) {
+
+
+    // contains tool that is null
+    if (vary == nullptr) {
         return false;
     }
-
-    // Reject duplicate tool names
-    if (find(tool->name()) != nullptr) {
+    //contins tools with same name
+    if (find(vary->name())!= nullptr) {
         return false;
     }
-
-    // Resize if adding a tool would exceed a 0.75 load factor
+    // must resize when tool factor us .75
 if (count_ + 1 > buckets_.size() * 0.75) {
 
-    // Create a new table with twice as many buckets
+    // 2x buckets
     std::vector<std::vector<std::unique_ptr<Tool>>> newBuckets(
-        buckets_.size() * 2
+        buckets_.size() *  2
+
+
     );
 
-    // Move existing tools into their new buckets
+    // put tools into new bucket
     for (auto& bucket : buckets_) {
-        for (auto& existingTool : bucket) {
 
-            // Calculate the new bucket index
+
+
+        for ( auto& prevtool : bucket) {
+
+             // new bucket index
             std::size_t newIndex =
-                hash(existingTool->name()) % newBuckets.size();
+                hash(prevtool->name()) % newBuckets.size();
 
-            // Transfer ownership into the new bucket
-            newBuckets[newIndex].push_back(std::move(existingTool));
+
+
+
+
+            // new bucket ownership
+            newBuckets[newIndex].push_back(std::move(prevtool));
+
+
         }
     }
-
-    // Replace the old table with the new table
-    buckets_ = std::move(newBuckets);
+    buckets_ = std::move(newBuckets);// new table now
 }
 
-    // Find the bucket for this tool
-    std::size_t index = hash(tool->name()) % buckets_.size();
+    //locate tool
+    std::size_t index = hash(vary->name()) % buckets_.size();
 
-    // Insert the tool into that bucket
-    buckets_[index].push_back(std::move(tool));
-
-    // Increase the number of registered tools
+    //assign tool with specified bucket
+    buckets_[index].push_back(std::move(vary));
     count_++;
+
 
     return true;
 }
 
 Tool* ToolRegistry::find(std::string_view name) const {
-    // Determine which bucket the tool belongs in
-    std::size_t index = hash(name) % buckets_.size();
+    // find bucket tool is in
+    std::size_t index =hash(name)% buckets_.size();
 
-    // Search through the tools in that bucket
+    //sift through the tools
     for (const auto& tool : buckets_[index]) {
-        if (tool->name() == name) {
-            return tool.get();
+
+
+
+        if (tool->name()== name) {
+            return  tool.get();
         }
     }
 
-    // Tool was not found
+    //for when tool is not found \/
     return nullptr;
 }
 
@@ -114,17 +129,17 @@ double ToolRegistry::load_factor() const noexcept {
 
 std::size_t ToolRegistry::max_probe_length() const {
 
-    // Track the longest chain
-    std::size_t maxLength = 0;
+    //keep track of longest chain
+    std::size_t longC = 0;
 
     // Check every bucket
     for (const auto& bucket : buckets_) {
 
-        // Update maxLength if this bucket is larger
-        if (bucket.size() > maxLength) {
-            maxLength = bucket.size();
+        // Update longC if this bucket is larger
+        if (bucket.size() > longC) {
+         longC = bucket.size();
         }
     }
 
-    return maxLength;
+    return longC;
 }

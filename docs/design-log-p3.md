@@ -1,10 +1,7 @@
 # Project 3 Design Log
 **Author:** <your name(s)> · **P2 code used:** <my own | instructor reference>
 **Tools used:** <AI assistants / other tools, and what you used them for>
-
-<!-- 500–800 words. An argument, not a diary: say what you decided, what
-     you rejected, and what evidence backs it up. Delete these comments
-     before submitting. -->
+Visual Studio Code, WSL Ubuntu, CMake, GitHub, and ChatGPT.
 
 ## 1. Hash table
 <!-- Chaining or open addressing, and why. Your hash function, load-factor

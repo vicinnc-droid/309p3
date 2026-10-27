@@ -9,49 +9,60 @@
 
 namespace fs = std::filesystem;
 
-bool Workspace::resolve(std::string_view user_path, fs::path* out,
+bool Workspace::resolve(std::string_view thePath, fs::path* out,
                         std::string* reason) const {
+                        
 
-    // Step 1: Reject an empty path
-    if (user_path.empty()) {
-        *reason = "empty path";
-        return false;
+                            
+    // do not accept path
+    if (thePath.empty()) {
+        *reason= "this paht is empty";
+        
+        return  false;
     }
+    // do not accept paths with pointers
+if (thePath.find('\0')!=std::string_view::npos) {
 
-    // Step 2: Reject paths containing a null character
-if (user_path.find('\0') != std::string_view::npos) {
-    *reason = "path contains null character";
+
+
+
+    *reason = "null pinter detected!!!";
+
     return false;
 }
 
-    // Step 3: Convert the string into a filesystem path
-fs::path p{std::string(user_path)};
+    //string becomes file system path
+fs::path p{std::string(thePath)};
+// rooted path violation
+if (p.is_absolute()  || p.has_root_path()) {
+    *reason = "this has an absolute path";
 
-// Reject absolute or rooted paths
-if (p.is_absolute() || p.has_root_path()) {
-    *reason = "absolute paths are not allowed";
-    return false;
+
+
+   return false;
 }
 
-// Step 4: Normalize the path
+// normalize path
 fs::path n = p.lexically_normal();
 
-// Step 5: Reject paths that escape the workspace
+// path esacping workplace protocall
 if (!n.empty() && *n.begin() == "..") {
     *reason = "path escapes workspace";
+
     return false;
 }
-
-
-// Step 6: Create the full path inside the workspace
-if (n == ".") {
+// full path creationn
+if (n== ".") {
     *out = root();
-} else {
-    *out = root() / n;
+} 
+else {
+
+
+    *out  = root() / n;
 }
 
-// Path is valid
-return true;
+
+return true;// the path works
 
 
 

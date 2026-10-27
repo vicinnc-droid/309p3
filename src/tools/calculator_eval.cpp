@@ -7,65 +7,82 @@
 #include "tools/calculator.h"
 #include <stack>
 
-// Determine the priority of an operator
+//look at operator
 static int precedence(CalcToken::Kind op) {
 
-    if (op == CalcToken::Kind::Times ||
+    if (op== CalcToken::Kind::Times ||
         op == CalcToken::Kind::Divide) {
-        return 2;
-    }
 
-    if (op == CalcToken::Kind::Plus ||
-        op == CalcToken::Kind::Minus) {
+
+        return 2;
+    }       
+
+
+
+    if (op ==CalcToken::Kind::Plus ||
+        op ==CalcToken::Kind::Minus) {
+
+
         return 1;
     }
-
-    return 0;
+    return 0;//return 0 in case
 }
 
-// Apply the operator at the top of the stack
+// operator on top
 static bool apply_operator(
     std::stack<double>& values,
     std::stack<CalcToken::Kind>& ops,
     std::string* error) {
 
-    // Make sure we have an operator and two numbers
+    // makes sure there is an operator with 2 nums
     if (ops.empty() || values.size() < 2) {
+
         *error = "invalid expression";
+
+
         return false;
     }
 
-    // Get and remove the operator
+    // remove operator
+
     CalcToken::Kind op = ops.top();
     ops.pop();
 
-    // Get the right operand first
+    // Gget right operand
     double right = values.top();
     values.pop();
 
-    // Get the left operand second
+    //get left
     double left = values.top();
     values.pop();
 
     double result = 0.0;
 
-    // Perform the operation
+    //do the operation with the numbers
     switch (op) {
         case CalcToken::Kind::Plus:
+
+
             result = left + right;
+
             break;
 
         case CalcToken::Kind::Minus:
             result = left - right;
             break;
 
+
         case CalcToken::Kind::Times:
             result = left * right;
+
             break;
 
         case CalcToken::Kind::Divide:
             if (right == 0.0) {
+
                 *error = "division by zero";
+
+
                 return false;
             }
             result = left / right;
@@ -76,92 +93,105 @@ static bool apply_operator(
             return false;
     }
 
-    // Store the result for later calculations
+    //keep result
     values.push(result);
+
     return true;
 }
 
 bool calc_evaluate(const std::vector<CalcToken>& tokens, double* out,
                    std::string* error) {
 
-    // Stack to store numbers
+    //store numbers on stack
     std::stack<double> values;
 
-    // Stack to store operators
+    //operator stack
     std::stack<CalcToken::Kind> ops;
 
-    // Process each token in the expression
+    //look at each token
 for (const CalcToken& token : tokens) {
 
-    // If the token is a number, push it onto the values stack
+    //token = number
     if (token.kind == CalcToken::Kind::Number) {
         values.push(token.value);
     }
 
-    // If the token is an opening parenthesis, push it onto ops
+    // token = (
     else if (token.kind == CalcToken::Kind::LParen) {
         ops.push(token.kind);
     }
 
-    // If the token is a closing parenthesis
+    // token = )
     else if (token.kind == CalcToken::Kind::RParen) {
 
-        // Calculate everything inside the parentheses
+        
         while (!ops.empty() && ops.top() != CalcToken::Kind::LParen) {
+
+
             if (!apply_operator(values, ops, error)) {
+
                 return false;
             }
         }
 
-        // Remove the opening parenthesis
+        // get rid of parenthesis
         if (ops.empty()) {
-            *error = "mismatched parentheses";
+
+            *error = "not the right parenthessi";
             return false;
         }
 
         ops.pop();
     }
 
-    // Otherwise, the token is an arithmetic operator
+    // token is operator
     else {
 
-        // Apply operators with higher or equal precedence
-        while (!ops.empty() &&
-               ops.top() != CalcToken::Kind::LParen &&
+        //apply pemdas
+        while (!ops.empty()&&
+               ops.top()!= CalcToken::Kind::LParen &&
                precedence(ops.top()) >= precedence(token.kind)) {
 
             if (!apply_operator(values, ops, error)) {
+
+
+
                 return false;
             }
         }
-
-        // Save the current operator
         ops.push(token.kind);
     }
 }
 
-// Apply all remaining operators
+// apply ops that are left
 while (!ops.empty()) {
 
-    // Check for unmatched parentheses
+    // look through the single parentheses
     if (ops.top() == CalcToken::Kind::LParen) {
         *error = "mismatched parentheses";
+
+
         return false;
     }
 
-    // Perform the next operation
+    //next operation
     if (!apply_operator(values, ops, error)) {
+
+
         return false;
     }
 }
 
-// Make sure exactly one answer remains
+//make sure there is only 1 answer 
 if (values.size() != 1) {
+    
     *error = "invalid expression";
+
+
     return false;
 }
 
-// Store the final answer
+//final answer
 *out = values.top();
 
 return true;
