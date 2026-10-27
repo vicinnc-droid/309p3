@@ -2,6 +2,8 @@
 //
 // A hand-written hash table. No std::unordered_map / std::map / std::set.
 // Every function below is a stub so the starter compiles. Replace each body.
+//Author: Victor Montalvo
+//Created 10/25
 
 #include "tools/tool_registry.h"
 
